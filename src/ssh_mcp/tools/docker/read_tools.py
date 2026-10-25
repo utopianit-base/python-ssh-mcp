@@ -27,6 +27,7 @@ from ._helpers import (
     _rewrite_stdout,
     _run_docker,
     _strip_noisy_fields,
+    _validate_image,
     _validate_label,
     _validate_name,
     _validate_reference,
@@ -62,14 +63,14 @@ async def ssh_docker_ps(
       ``removing`` is compose-only and intentionally not in this set.
     - ``label``: bare key (``role``) or key=value (``role=frontend``).
     - ``ancestor``: match containers whose image (or any ancestor) is the
-      given name/tag. Same regex as ``name``.
+      given image reference (``repo/name:tag`` allowed).
 
     Multiple filters AND together (Docker semantics).
     """
     if name is not None:
         _validate_name("container", name)
     if ancestor is not None:
-        _validate_name("ancestor", ancestor)
+        _validate_image(ancestor, "ancestor")
     if label is not None:
         _validate_label(label)
     argv = ["ps", "--format", "{{json .}}", "--no-trunc"]
@@ -135,7 +136,10 @@ async def ssh_docker_inspect(
     kind: Literal["container", "image", "network", "volume"] = "container",
 ) -> dict[str, Any]:
     """Inspect a docker object. Returns the parsed JSON array under ``objects``."""
-    _validate_name(kind, target)
+    if kind == "image":
+        _validate_image(target)
+    else:
+        _validate_name(kind, target)
     argv = ["inspect", "--type", kind, "--", target]
     result = await _run_docker(ctx, host, argv)
     objects: list[Any] = []

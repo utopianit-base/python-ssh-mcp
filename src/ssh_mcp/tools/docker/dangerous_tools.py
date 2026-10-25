@@ -22,6 +22,7 @@ from ._helpers import (
     _compose_project_op,
     _reject_escalation_flags,
     _run_docker,
+    _validate_image,
     _validate_name,
 )
 
@@ -76,7 +77,7 @@ async def ssh_docker_run(
     ``ALLOW_DANGEROUS_TOOLS``. Set ``ALLOW_DOCKER_PRIVILEGED=true`` to
     permit them; that bypass is explicit and grep-able in env and audit logs.
     """
-    _validate_name("image", image.split(":", 1)[0])
+    _validate_image(image)
     if name is not None:
         _validate_name("container", name)
     settings = settings_from(ctx)
@@ -105,7 +106,7 @@ async def ssh_docker_pull(
     timeout: int | None = None,
 ) -> dict[str, Any]:
     """Pull an image. Respects SSH_COMMAND_TIMEOUT; bump ``timeout`` for slow networks."""
-    _validate_name("image", image.split(":", 1)[0])
+    _validate_image(image)
     return await _run_docker(ctx, host, ["pull", "--", image], timeout=timeout)
 
 
@@ -135,7 +136,7 @@ async def ssh_docker_rmi(
     force: bool = False,
 ) -> dict[str, Any]:
     """Remove an image. Force-delete with ``force=True`` (removes dependents)."""
-    _validate_name("image", image.split(":", 1)[0])
+    _validate_image(image)
     argv = ["rmi"]
     if force:
         argv.append("-f")

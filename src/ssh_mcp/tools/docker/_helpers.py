@@ -93,6 +93,20 @@ def _validate_reference(reference: str) -> str:
     return reference
 
 
+# Concrete image reference for pull / rmi / run / inspect / ancestor:
+# ``[registry[:port]/]repo[/repo...][:tag][@digest]``. Like
+# `_DOCKER_REFERENCE_RE` but no globs, and must not start with `-`.
+_DOCKER_IMAGE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/:@\-]{0,255}$")
+
+
+def _validate_image(image: str, kind: str = "image") -> str:
+    """Validate an image reference such as ``stilldeadcode/radiance:latest``,
+    ``ghcr.io/org/app@sha256:...`` or ``registry:5000/app``."""
+    if not _DOCKER_IMAGE_RE.match(image):
+        raise ValueError(f"invalid docker {kind} reference {image!r}: must match [A-Za-z0-9][A-Za-z0-9._/:@-]*")
+    return image
+
+
 # ---------------------------------------------------------------------------
 # Host-escape deny-list for `docker run` (INC-022 / INC-024 / INC-025)
 # ---------------------------------------------------------------------------
